@@ -32,11 +32,11 @@ jobs:
       - name: Validate PR title and create check
         uses: FiligranHQ/filigran-ci-tools/actions/pr-title-check@main
         with:
-          github_token: ${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
 ```
 
 ### 3. Inputs
-- `github_token`: The token generated in the previous step (must have `checks:write` permission)
+- `token`: The token generated in the previous step (must have `checks:write` permission)
 
 ## Required PR Title Format
 ```

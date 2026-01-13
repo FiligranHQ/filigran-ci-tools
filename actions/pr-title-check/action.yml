@@ -11,7 +11,7 @@ runs:
     - name: Validate PR title and create check
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ inputs.github_token }}
+        GITHUB_TOKEN: ${{ inputs.token }}
         REPO: ${{ github.repository }}
         SHA: ${{ github.event.pull_request.head.sha }}
       run: |
