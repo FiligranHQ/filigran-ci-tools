@@ -1,0 +1,65 @@
+name: "Auto Label"
+description: "Add labels to PRs/issues based on organization membership."
+author: "FiligranHQ"
+inputs:
+  github_token:
+    description: "GitHub token with repo scope."
+    required: false
+    default: "${{ github.token }}"
+  labels_by_organization:
+    description: "A JSON string mapping orgs to label arrays."
+    required: true
+  repository:
+    description: "The owner/repo name."
+    required: false
+    default: "${{ github.repository }}"
+runs:
+  using: "composite"
+  steps:
+    - name: Set up jq and gh
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y jq
+        if ! command -v gh &> /dev/null; then
+          echo "::error::GitHub CLI (gh) is required."
+          exit 1
+        fi
+    - name: Auto-label based on org membership
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+        LABELS_BY_ORG: ${{ inputs.labels_by_organization }}
+        REPO: ${{ inputs.repository }}
+      run: |
+        set -euo pipefail
+        # Get issue/PR number and author
+        if [[ -n "${{ github.event.pull_request.number }}" ]]; then
+          NUMBER="${{ github.event.pull_request.number }}"
+          AUTHOR="${{ github.event.pull_request.user.login }}"
+        else
+          NUMBER="${{ github.event.issue.number }}"
+          AUTHOR="${{ github.event.issue.user.login }}"
+        fi
+        echo "Target number: $NUMBER, author: $AUTHOR"
+        # Parse labels_by_organization
+        echo "$LABELS_BY_ORG" | jq -c 'to_entries[]' | while read -r entry; do
+          ORG=$(echo "$entry" | jq -r '.key')
+          LABELS=$(echo "$entry" | jq -r '.value | @csv' | tr -d '"')
+          echo "Checking org: $ORG for labels: $LABELS"
+          # Check if author is a member of the org
+          if gh api orgs/$ORG/members/$AUTHOR --silent; then
+            echo "$AUTHOR is a member of $ORG, adding labels: $LABELS"
+            IFS=',' read -ra LABEL_ARR <<< "$LABELS"
+            for label in "${LABEL_ARR[@]}"; do
+              label=$(echo "$label" | xargs)
+              if [[ -n "$label" ]]; then
+                gh issue edit "$NUMBER" --repo "$REPO" --add-label "$label"
+              fi
+            done
+          else
+            echo "$AUTHOR is not a member of $ORG"
+          fi
+        done
+branding:
+  icon: bookmark
+  color: green
