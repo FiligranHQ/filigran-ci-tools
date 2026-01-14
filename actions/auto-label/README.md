@@ -5,7 +5,8 @@ Automatically add labels to pull requests or issues based on the author's organi
 ## Inputs
 
 - `github_token` (**required**): GitHub token with repo scope.
-- `labels_by_organization` (**required**): A JSON string mapping organization names to arrays of labels. Example:
+- `labels_by_organization` (optional): A JSON string mapping organization names to arrays of labels. Defaults to `{ "FiligranHQ": ["filigran team"] }`.
+  Example:
   ```json
   { "my-org": ["internal", "trusted"], "other-org": ["external"] }
   ```
@@ -23,7 +24,8 @@ Automatically add labels to pull requests or issues based on the author's organi
   uses: FiligranHQ/filigran-ci-tools/actions/auto-label@main
   with:
     github_token: ${{ secrets.GITHUB_TOKEN }}
-    labels_by_organization: '{"my-org": ["internal"], "other-org": ["external"]}'
+    # labels_by_organization is optional, defaults to {"FiligranHQ": ["filigran team"]}
+    # labels_by_organization: '{"my-org": ["internal"], "other-org": ["external"]}'
 ```
 
 ## Notes

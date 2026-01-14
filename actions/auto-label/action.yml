@@ -8,7 +8,8 @@ inputs:
     default: "${{ github.token }}"
   labels_by_organization:
     description: "A JSON string mapping orgs to label arrays."
-    required: true
+    required: false
+    default: '{"FiligranHQ":["filigran team"]}'
   repository:
     description: "The owner/repo name."
     required: false
@@ -60,6 +61,3 @@ runs:
             echo "$AUTHOR is not a member of $ORG"
           fi
         done
-branding:
-  icon: bookmark
-  color: green
