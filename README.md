@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Auto Label"
-        uses: FiligranHQ/filigran-ci-tools/actions/auto-label@v1
+        uses: FiligranHQ/filigran-ci-tools/actions/auto-label@main
 ```
 
 ```
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check signed commits in PR
-        uses: FiligranHQ/filigran-ci-tools/actions/check-signed-commit@v1
+        uses: FiligranHQ/filigran-ci-tools/actions/check-signed-commit@main
 ```
 
 ```
@@ -61,7 +61,7 @@ jobs:
           app-id: ${{ secrets.OPENAEV_PR_CHECKS_APP_ID }}
           private-key: ${{ secrets.OPENAEV_PR_CHECKS_PRIVATE_KEY }}
       - name: "Validate PR title and create check"
-        uses: FiligranHQ/filigran-ci-tools/actions/pr-title-check@v1
+        uses: FiligranHQ/filigran-ci-tools/actions/pr-title-check@main
         with:
           token: ${{ steps.generate-token.outputs.token }}
 
