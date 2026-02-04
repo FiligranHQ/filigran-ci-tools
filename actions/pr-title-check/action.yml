@@ -2,7 +2,7 @@ name: "PR Title Check"
 description: "Reusable GitHub Action to validate PR titles and create a check run."
 author: "FiligranHQ"
 inputs:
-  github_token:
+  token:
     description: "GitHub token with checks:write permission (must be generated in your workflow)"
     required: true
 runs:
@@ -24,6 +24,12 @@ runs:
           echo "⚠️ Skipping validation for renovate PRs."
           OUTPUT_TITLE="⚠️ Skipping validation for Renovate PRs."
           OUTPUT_SUMMARY="⚠️ Skipping validation for Renovate PRs."
+          CONCLUSION="success"
+        # Skip validation for merge commits
+        elif [[ "$TITLE" =~ ^Merge\ branch\ \'.*\'\ into\  ]]; then
+          echo "⚠️ Skipping validation for merge commits."
+          OUTPUT_TITLE="⚠️ Skipping validation for merge commits."
+          OUTPUT_SUMMARY="⚠️ Skipping validation for merge commits."
           CONCLUSION="success"
         else
           # Full pattern:
