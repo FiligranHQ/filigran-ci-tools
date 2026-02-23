@@ -1,0 +1,22 @@
+[project]
+name = "connector-manifest-writer"
+version = "1.0.0"
+description = "A tool to compile a JSON manifest file for OpenAEV, from OpenAEV-compatible collectors and injectors"
+authors = [
+    {name = "Antoine MAZEAS",email = "antoine.mazeas@filigran.io"}
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "toml (>=0.10.2,<0.11.0)"
+]
+
+[tool.poetry]
+packages = [
+    { include = "connector_manifest_writer" }
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
