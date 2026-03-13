@@ -1,0 +1,22 @@
+# MacOS Finder files
+.DS_Store
+
+# IntelliJ Platform) | JetBrains
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+.history/
+
+# NodeJS
+node_modules/
+
+# Yarn
+.yarn/
+
+# Python
+.mypy_cache
+.venv
+venv
+__pycache__/
