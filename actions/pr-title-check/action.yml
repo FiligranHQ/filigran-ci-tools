@@ -15,6 +15,7 @@ runs:
         REPO: ${{ github.repository }}
         SHA: ${{ github.event.pull_request.head.sha }}
         TITLE: ${{ github.event.pull_request.title }}
+        SOURCE_REPO: ${{ github.event.pull_request.head.repo.full_name }}
       run: |
         set -euo pipefail
         EXIT_CODE=0
@@ -75,7 +76,7 @@ runs:
           fi
         fi
         # Create custom check run only if not from fork
-        if [[ "${{ github.event.pull_request.head.repo.full_name }}" == "${{ github.repository }}" ]]; then
+        if [[ "$SOURCE_REPO" == "$REPO" ]]; then
           CHECK_RUN=$(\
             curl -sS -X POST \
               -H "Authorization: Bearer $GITHUB_TOKEN" \
