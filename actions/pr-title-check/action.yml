@@ -14,9 +14,9 @@ runs:
         GITHUB_TOKEN: ${{ inputs.token }}
         REPO: ${{ github.repository }}
         SHA: ${{ github.event.pull_request.head.sha }}
+        TITLE: ${{ github.event.pull_request.title }}
       run: |
         set -euo pipefail
-        TITLE="${{ github.event.pull_request.title }}"
         EXIT_CODE=0
         echo "PR title: $TITLE"
         # Skip validation for renovate
