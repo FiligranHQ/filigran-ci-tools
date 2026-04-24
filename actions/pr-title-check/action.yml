@@ -45,7 +45,7 @@ runs:
             EXIT_CODE=1
             # Diagnose common failures
             # 1) Check category block: [category/category]
-            CATEGORY_PATTERN='^\[([a-z]+(/[a-z]+)*)\]'
+            CATEGORY_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\]'
             if ! [[ "$TITLE" =~ $CATEGORY_PATTERN ]]; then
               REASON="Bad [category] block. Expected: [category] or [category/category]"
             fi
