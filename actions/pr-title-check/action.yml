@@ -35,7 +35,7 @@ runs:
         else
           # Full pattern:
           # [category/subcategory] type(scope?): description (#123)
-          FULL_PATTERN='^\[([a-z]+(/[a-z]+)*)\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z][a-z_-]*\))?: [a-z].*( \(#[0-9]+\))$'
+          FULL_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?: [a-z].*( \(#[0-9]+\))$'
           if [[ "$TITLE" =~ $FULL_PATTERN ]]; then
             echo "✅ PR title is valid."
             OUTPUT_TITLE="✅ PR title is valid."
