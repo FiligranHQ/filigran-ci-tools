@@ -55,7 +55,7 @@ runs:
               REASON="Bad type(scope): block. Expected type: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert (optionally with scope: type(scope):)"
             fi
             # 3) Check description starts with lowercase letter
-            DESC_PATTERN='^\[([a-z]+(/[a-z]+)*)\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z][a-z_-]*\))?: [a-z]'
+            DESC_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?: [a-z]'
             if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $DESC_PATTERN ]]; then
               REASON="Bad description. Must start with a lowercase letter after ': '"
             fi
