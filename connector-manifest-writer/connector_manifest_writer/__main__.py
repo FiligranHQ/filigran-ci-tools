@@ -15,7 +15,6 @@ def main():
     args = parser.parse_args()
 
     contracts = []
-    config_schema_str = ""
     for dir in args.target:
         try:
             pyproject_path = "{}/pyproject.toml".format(dir)
@@ -29,11 +28,11 @@ def main():
 
             install_process = subprocess.run(tool_cmw.get("install-command").split(), text=True, capture_output=True, cwd=dir)
             if install_process.returncode != 0:
-                raise RuntimeError(f"There was a problem installing '{tool_cmw.get('install-command')}'")
+                raise RuntimeError(f"There was a problem installing '{tool_cmw.get('install-command')}'; process: {install_process}")
 
             process = subprocess.run(tool_cmw.get("config-dump-command").split(), text=True, capture_output=True, cwd=dir)
             if process.returncode != 0:
-                raise RuntimeError(f"problem with command '{tool_cmw.get('config-dump-command')}'")
+                raise RuntimeError(f"problem with command '{tool_cmw.get('config-dump-command')}'; process: {process}")
             config_schema_str = process.stdout
 
             with open(f"{dir}/{tool_cmw.get('icon-path')}", "rb") as f:
@@ -46,7 +45,7 @@ def main():
 
             contracts.append(static_metadata_contents)
         except Exception as e:
-            raise RuntimeError(f"There was a problem processing directory '{dir}'; install process: {install_process}; Dump process: {process}") from e
+            raise RuntimeError(f"There was a problem processing directory '{dir}'") from e
 
     manifest = {"id": "filigran-catalog-id", "name": "OpenAEV Connectors contracts", "description": "",
                 "version": "rolling", "contracts": contracts}
