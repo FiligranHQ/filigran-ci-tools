@@ -15,6 +15,7 @@ def main():
     args = parser.parse_args()
 
     contracts = []
+    config_schema_str = ""
     for dir in args.target:
         try:
             pyproject_path = "{}/pyproject.toml".format(dir)
@@ -41,7 +42,7 @@ def main():
 
             contracts.append(static_metadata_contents)
         except Exception as e:
-            raise RuntimeError(f"There was a problem processing directory '{dir}'") from e
+            raise RuntimeError(f"There was a problem processing directory '{dir}'. Subprocess output: {config_schema_str[0:100]}") from e
 
     manifest = {"id": "filigran-catalog-id", "name": "OpenAEV Connectors contracts", "description": "",
                 "version": "rolling", "contracts": contracts}
