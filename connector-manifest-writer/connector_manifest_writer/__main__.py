@@ -27,9 +27,13 @@ def main():
 
             tool_cmw = pyproject_contents.get("tool").get("cmw")
 
-            subprocess.run(tool_cmw.get("install-command").split(), text=True, capture_output=True, cwd=dir)
+            install_process = subprocess.run(tool_cmw.get("install-command").split(), text=True, capture_output=True, cwd=dir)
+            if install_process.returncode != 0:
+                raise RuntimeError(f"There was a problem installing '{tool_cmw.get('install-command')}'")
 
             process = subprocess.run(tool_cmw.get("config-dump-command").split(), text=True, capture_output=True, cwd=dir)
+            if process.returncode != 0:
+                raise RuntimeError(f"problem with command '{tool_cmw.get('config-dump-command')}'")
             config_schema_str = process.stdout
 
             with open(f"{dir}/{tool_cmw.get('icon-path')}", "rb") as f:
@@ -42,7 +46,7 @@ def main():
 
             contracts.append(static_metadata_contents)
         except Exception as e:
-            raise RuntimeError(f"There was a problem processing directory '{dir}'. Subprocess output: {config_schema_str[0:100]}") from e
+            raise RuntimeError(f"There was a problem processing directory '{dir}'; install process: {install_process}; Dump process: {process}") from e
 
     manifest = {"id": "filigran-catalog-id", "name": "OpenAEV Connectors contracts", "description": "",
                 "version": "rolling", "contracts": contracts}
