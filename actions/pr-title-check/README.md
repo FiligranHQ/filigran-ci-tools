@@ -1,9 +1,9 @@
 # PR Title Check Action
 
-Reusable GitHub Action to validate PR titles and create a check run.
+Reusable GitHub Action to validate PR titles against [Conventional Commits](https://www.conventionalcommits.org/) and create a check run.
 
 ## Features
-- Validates PR titles for format: `[category/subcategory] type(scope?): description (#123)`
+- Validates PR titles against Conventional Commits: `type(scope?)!?: description (#123)`
 - Skips validation for Renovate PRs
 - Diagnoses common formatting errors
 - Creates a custom check run with the result
@@ -40,9 +40,19 @@ jobs:
 
 ## Required PR Title Format
 ```
-[category/subcategory] type(scope?): description (#123)
+type(scope?)!?: description (#123)
 ```
-- Example: `[core/api] feat(auth): add login endpoint (#42)`
+- `type` is one of: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `revert`
+- `scope` is optional, a lowercase noun in parentheses describing a section of the codebase
+- `!` is optional, indicates a breaking change
+- `description` must start with a lowercase letter
+- `(#123)` is a required issue reference at the end
+
+### Examples
+- `feat(auth): add login endpoint (#42)`
+- `fix: resolve array parsing issue (#99)`
+- `feat(api)!: remove deprecated endpoints (#150)`
+- `docs: update contributing guide (#7)`
 
 ## Notes
 - The action will not fail the job (it uses `continue-on-error: true`).
