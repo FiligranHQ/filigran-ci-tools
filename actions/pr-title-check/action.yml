@@ -44,15 +44,10 @@ runs:
           else
             EXIT_CODE=1
             # Diagnose common failures
-            # 1) Check type prefix
-            TYPE_ONLY_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)'
-            if ! [[ "$TITLE" =~ $TYPE_ONLY_PATTERN ]]; then
-              REASON="Bad type prefix. Must start with one of: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert"
-            fi
-            # 2) Check type + optional scope + optional ! + colon
+            # 1) Check type + optional scope + optional ! + colon
             TYPE_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?!?: '
-            if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $TYPE_PATTERN ]]; then
-              REASON="Bad scope or separator. Expected format: type(scope)?: or type!: or type(scope)!:"
+            if ! [[ "$TITLE" =~ $TYPE_PATTERN ]]; then
+              REASON="Bad type/scope prefix. Must match: type(scope?)!?: where type is one of: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert"
             fi
             # 3) Check description starts with lowercase letter
             DESC_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?!?: [a-z]'
