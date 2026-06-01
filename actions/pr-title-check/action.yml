@@ -33,9 +33,9 @@ runs:
           OUTPUT_SUMMARY="⚠️ Skipping validation for merge commits."
           CONCLUSION="success"
         else
-          # Full pattern:
-          # [category/subcategory] type(scope?): description (#123)
-          FULL_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?: [a-z].*( \(#[0-9]+\))$'
+          # Conventional Commits pattern with issue reference:
+          # type(scope?)!?: description (#123)
+          FULL_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?!?: [a-z].* \(#[0-9]+\)$'
           if [[ "$TITLE" =~ $FULL_PATTERN ]]; then
             echo "✅ PR title is valid."
             OUTPUT_TITLE="✅ PR title is valid."
@@ -44,34 +44,34 @@ runs:
           else
             EXIT_CODE=1
             # Diagnose common failures
-            # 1) Check category block: [category/category]
-            CATEGORY_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\]'
-            if ! [[ "$TITLE" =~ $CATEGORY_PATTERN ]]; then
-              REASON="Bad [category] block. Expected: [category] or [category/category]"
+            # 1) Check type prefix
+            TYPE_ONLY_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)'
+            if ! [[ "$TITLE" =~ $TYPE_ONLY_PATTERN ]]; then
+              REASON="Bad type prefix. Must start with one of: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert"
             fi
-            # 2) Check type + optional scope
-            TYPE_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?: '
+            # 2) Check type + optional scope + optional ! + colon
+            TYPE_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?!?: '
             if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $TYPE_PATTERN ]]; then
-              REASON="Bad type(scope): block. Expected type: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert (optionally with scope: type(scope):)"
+              REASON="Bad scope or separator. Expected format: type(scope)?: or type!: or type(scope)!:"
             fi
             # 3) Check description starts with lowercase letter
-            DESC_PATTERN='^\[([a-z]+([_-][a-z]+)*)(\/[a-z]+([_-][a-z]+)*)*\] (feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?: [a-z]'
+            DESC_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-z]+([_-][a-z]+)*(\/[a-z]+([_-][a-z]+)*)*\))?!?: [a-z]'
             if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $DESC_PATTERN ]]; then
               REASON="Bad description. Must start with a lowercase letter after ': '"
             fi
             # 4) Check issue reference at the end: (#XXX)
             ISSUE_PATTERN='\(#[0-9]+\)$'
             if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $ISSUE_PATTERN ]]; then
-              REASON="Bad (#XXX) ending block. Missing issue reference"
+              REASON="Missing issue reference. Must end with (#XXX)"
             fi
             if [[ -z "${REASON:-}" ]]; then
               REASON="Bad title. Does not match the required pattern"
             fi
             echo "❌ Invalid PR title: $REASON"
             echo "Required format:"
-            echo "[category] type(scope?): description (#123)"
+            echo "type(scope?): description (#123)"
             OUTPUT_TITLE="$REASON"
-            OUTPUT_SUMMARY="❌ Invalid PR title: $REASON. \nRequired: [category] type(scope?): description (#XXX)"
+            OUTPUT_SUMMARY="❌ Invalid PR title: $REASON. \nRequired: type(scope?)!?: description (#XXX)"
             CONCLUSION="failure"
           fi
         fi
