@@ -20,11 +20,11 @@ runs:
         set -euo pipefail
         EXIT_CODE=0
         echo "PR title: $TITLE"
-        # Skip validation for renovate
-        if [[ "$TITLE" == *"chore(deps)"* ]]; then
-          echo "⚠️ Skipping validation for renovate PRs."
-          OUTPUT_TITLE="⚠️ Skipping validation for Renovate PRs."
-          OUTPUT_SUMMARY="⚠️ Skipping validation for Renovate PRs."
+        # Skip validation for renovate/dependabot
+        if [[ "$TITLE" == *"chore(deps)"* || "$TITLE" == *"fix(deps)"* ]]; then
+          echo "⚠️ Skipping validation for dependency PRs."
+          OUTPUT_TITLE="⚠️ Skipping validation for dependency PRs."
+          OUTPUT_SUMMARY="⚠️ Skipping validation for dependency PRs."
           CONCLUSION="success"
         # Skip validation for merge commits
         elif [[ "$TITLE" =~ ^Merge\ branch\ \'.*\'\ into\  ]]; then
