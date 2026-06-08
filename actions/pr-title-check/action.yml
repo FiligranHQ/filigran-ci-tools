@@ -22,7 +22,7 @@ runs:
         echo "PR title: $TITLE"
         # Conventional Commits pattern with issue reference:
         # type(scope?)!?: description (#123)
-        FULL_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_\-\.]+\))?!?: .+( \(#[0-9]+(, ?#[0-9]+)*\))?$'
+        FULL_PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([a-zA-Z0-9_.-]+\))?!?: .+( \(#[0-9]+(, ?#[0-9]+)*\))?$'
         ISSUE_PATTERN='\(#[0-9]+(, ?#[0-9]+)*\)$'
         if [[ "$TITLE" =~ $FULL_PATTERN ]]; then
           echo "✅ PR title is valid."
@@ -32,12 +32,12 @@ runs:
         else
           # Diagnose common failures
           # 1) Check type + optional scope + optional ! + colon
-          TYPE_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9_\-\.]+\))?!?: '
+          TYPE_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9_.-]+\))?!?: '
           if ! [[ "$TITLE" =~ $TYPE_PATTERN ]]; then
             REASON="Bad type/scope prefix. Must match: type(scope?)!?: where type is one of: feat, fix, chore, docs, style, refactor, perf, test, build, ci, revert"
           fi
           # 2) Check description is not empty
-          DESC_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9_\-\.]+\))?!?: .+'
+          DESC_PATTERN='^(feat|fix|chore|docs|style|refactor|perf|test|build|ci|revert)(\([a-zA-Z0-9_.-]+\))?!?: .+'
           if [[ -z "${REASON:-}" ]] && ! [[ "$TITLE" =~ $DESC_PATTERN ]]; then
             REASON="Bad description. Must provide a non-empty description after ': '"
           fi
