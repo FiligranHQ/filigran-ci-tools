@@ -26,7 +26,7 @@ runs:
         # Shared issue reference core (reused in both patterns)
         ISSUE_CORE='#[0-9]+'
         # Full pattern: base + non-empty description + optional issue ref
-        FULL_PATTERN="${BASE_PATTERN}.+( \(${ISSUE_CORE}\))?$"
+        FULL_PATTERN="${BASE_PATTERN}.+?( \(${ISSUE_CORE}\))?$"
         ISSUE_PATTERN="\(${ISSUE_CORE}\)$"
         
         if [[ "$TITLE" =~ $FULL_PATTERN ]]; then
