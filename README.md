@@ -1,4 +1,3 @@
-
 # filigran-ci-tools
 
 GitHub Actions for Filigran projects.
@@ -7,6 +6,7 @@ GitHub Actions for Filigran projects.
 - `pr-title-check`: Ensures PR titles follow Filigran conventions.
 - `check-signed-commit`: Requires all PR commits to be signed.
 - `auto-label`: Automatically labels PRs based on rules.
+- `move-closed-issue-to-milestone`: When a closed issue has the configured labels, moves it to the target milestone.
 
 ## Usage Examples
 
@@ -65,4 +65,22 @@ jobs:
         with:
           token: ${{ steps.generate-token.outputs.token }}
 
+```
+
+```
+name: "[Shared] Move closed issue to milestone"
+on:
+  issues:
+    types: [closed]
+permissions:
+  issues: write
+jobs:
+  move-to-milestone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move issue to milestone
+        uses: FiligranHQ/filigran-ci-tools/actions/move-closed-issue-to-milestone@main
+        with:
+          source-labels: "bug,critical"
+          target-milestone: "0. Candidate"
 ```
