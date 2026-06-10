@@ -1,0 +1,62 @@
+name: 'Move Closed Issue to Milestone'
+description: 'When a closed issue has the source labels, moves it to the target milestone.'
+
+inputs:
+  source-labels:
+    description: 'Comma-separated list of labels to match (e.g. "bug")'
+    required: true
+  target-milestone:
+    description: 'Milestone to move matching issues to'
+    required: true
+  issue-number:
+    description: 'Issue number (optional, for manual testing)'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Move issue
+      uses: actions/github-script@v9
+      env:
+        SOURCE_LABELS: ${{ inputs.source-labels }}
+        TARGET_MILESTONE: ${{ inputs.target-milestone }}
+        ISSUE_NUMBER_INPUT: ${{ inputs.issue-number }}
+      with:
+        script: |
+          const { decide } = require('./actions/move-closed-issue-to-milestone/logic.js');
+          const { getIssue, findOrCreateMilestone, setIssueMilestone } = require('./actions/move-closed-issue-to-milestone/api.js');
+
+          const sourceLabels = process.env.SOURCE_LABELS.split(',').map(s => s.trim());
+          const targetMilestone = process.env.TARGET_MILESTONE;
+          const issueNumberInput = process.env.ISSUE_NUMBER_INPUT;
+          const repo = context.repo;
+
+          let issue;
+          if (issueNumberInput) {
+            issue = await getIssue(github, repo, parseInt(issueNumberInput, 10));
+          } else if (context.payload.issue) {
+            issue = context.payload.issue;
+          } else {
+            core.info('No issue in payload.');
+            return;
+          }
+
+          const decision = decide({
+            sourceLabels,
+            targetMilestone,
+            issue: {
+              number: issue.number,
+              labels: (issue.labels || []).map(l => l.name),
+            },
+          });
+
+          if (decision.action === 'skip') {
+            core.info(decision.reason);
+            return;
+          }
+
+          const milestone = await findOrCreateMilestone(github, repo, targetMilestone);
+          await setIssueMilestone(github, repo, decision.issueNumber, milestone.number);
+
+          core.info(`Issue #${decision.issueNumber} → "${targetMilestone}"`);
