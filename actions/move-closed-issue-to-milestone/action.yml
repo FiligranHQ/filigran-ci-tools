@@ -24,8 +24,79 @@ runs:
         ISSUE_NUMBER_INPUT: ${{ inputs.issue-number }}
       with:
         script: |
-          const { decide } = require('./actions/move-closed-issue-to-milestone/logic.js');
-          const { getIssue, findOrCreateMilestone, setIssueMilestone } = require('./actions/move-closed-issue-to-milestone/api.js');
+          // --- Inline logic (replaces logic.js) ---
+          // In composite actions, actions/github-script resolves require() relative
+          // to the *caller* repo workspace, not the action directory — so external
+          // files cannot be required. All logic is inlined here instead.
+
+          function decide({ sourceLabels, targetMilestone, issue }) {
+            const issueLabels = (issue.labels || []).map(l => l.name);
+            const hasSourceLabel = sourceLabels.some(l => issueLabels.includes(l));
+            if (!hasSourceLabel) {
+              return {
+                action: 'skip',
+                reason: `Issue #${issue.number} has no matching label (expected one of: ${sourceLabels.join(', ')}).`,
+              };
+            }
+            return {
+              action: 'move',
+              issueNumber: issue.number,
+              targetMilestone,
+            };
+          }
+
+          // --- Inline api (replaces api.js) ---
+
+          async function getIssue(github, repo, issueNumber) {
+            const { data } = await github.rest.issues.get({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: issueNumber,
+            });
+            return data;
+          }
+
+          async function findOrCreateMilestone(github, repo, title) {
+            // Search open milestones first
+            const { data: openMilestones } = await github.rest.issues.listMilestones({
+              owner: repo.owner,
+              repo: repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const found = openMilestones.find(m => m.title === title);
+            if (found) return found;
+
+            // Also check closed milestones
+            const { data: closedMilestones } = await github.rest.issues.listMilestones({
+              owner: repo.owner,
+              repo: repo.repo,
+              state: 'closed',
+              per_page: 100,
+            });
+            const foundClosed = closedMilestones.find(m => m.title === title);
+            if (foundClosed) return foundClosed;
+
+            // Create if not found
+            const { data: created } = await github.rest.issues.createMilestone({
+              owner: repo.owner,
+              repo: repo.repo,
+              title,
+            });
+            core.info(`Created milestone "${title}".`);
+            return created;
+          }
+
+          async function setIssueMilestone(github, repo, issueNumber, milestoneNumber) {
+            await github.rest.issues.update({
+              owner: repo.owner,
+              repo: repo.repo,
+              issue_number: issueNumber,
+              milestone: milestoneNumber,
+            });
+          }
+
+          // --- Main ---
 
           const sourceLabels = process.env.SOURCE_LABELS.split(',').map(s => s.trim());
           const targetMilestone = process.env.TARGET_MILESTONE;
