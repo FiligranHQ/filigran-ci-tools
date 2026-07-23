@@ -149,6 +149,7 @@ runs:
           NEW_STATUS=""
           CLOSE_ISSUE="false"
           MOVE_MILESTONE="false"
+          ADD_NO_TEST_COMMENT="false"
 
           if [ "$HAS_FF" == "true" ]; then
             if [ "$CURRENT_STATUS" == "In review" ]; then
@@ -167,6 +168,7 @@ runs:
               NEW_STATUS="Done"
               CLOSE_ISSUE="true"
               MOVE_MILESTONE="true"
+              ADD_NO_TEST_COMMENT="true"
             fi
           fi
 
@@ -191,6 +193,12 @@ runs:
               }) { projectV2Item { id } }
             }' -f project="$PROJECT_ID" -f item="$ITEM_ID" -f field="$FIELD_ID" -f value="$OPTION_ID" > /dev/null
           echo "✅ Status → \"$NEW_STATUS\""
+        
+          if [ "${ADD_NO_TEST_COMMENT:-false}" == "true" ]; then
+            gh issue comment "$ISSUE_NUM" --repo "$OWNER/$REPO_NAME" --body \
+            "⚠️ This issue is moved directly to \`Done\` without a \`feature-flag\` label and without a dedicated test branch. We therefore assume that it **will not be tested** before going live."
+            echo "✅ Comment added (no feature-flag / no test branch)."
+          fi
 
           if [ "$CLOSE_ISSUE" == "true" ]; then
             gh issue edit "$ISSUE_NUM" --repo "$OWNER/$REPO_NAME" --add-label "solved"
