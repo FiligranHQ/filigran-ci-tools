@@ -4,10 +4,6 @@ description: "On PR merge, moves the Status field (Project v2) of the linked iss
 inputs:
   token:
     required: true
-  project-owner:
-    default: ${{ inputs.project-owner }}
-  project-number:
-    default: ${{ inputs.project-number }}
   feature-flag-label:
     default: 'feature-flag'
   target-milestone:

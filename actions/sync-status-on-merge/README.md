@@ -24,8 +24,8 @@ Any other combination: no action taken (logged as `ℹ️`).
 | Name | Required | Default | Description |
 |---|:---:|---|---|
 | `token` | ✅ | — | Token used for all `gh` calls (REST + GraphQL). |
-| `project-owner` | ❌ | `OpenAEV-Platform` | Org owning the Project v2. |
-| `project-number` | ❌ | `2` | Project v2 number. |
+| `project-owner` | ❌ | `''` | Org owning the Project v2. |
+| `project-number` | ❌ | `''` | Project v2 number. |
 | `feature-flag-label` | ❌ | `feature-flag` | Label indicating a feature flag on the issue. |
 | `target-milestone` | ❌ | `0. Candidate` | Milestone to assign (never created). |
 | `pr-number` | ❌ | `''` | Force processing of a specific PR (manual testing). |
