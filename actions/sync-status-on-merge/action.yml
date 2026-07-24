@@ -5,9 +5,9 @@ inputs:
   token:
     required: true
   project-owner:
-    default: 'OpenAEV-Platform'
+    default: ${{ inputs.project-owner }}
   project-number:
-    default: '2'
+    default: ${{ inputs.project-number }}
   feature-flag-label:
     default: 'feature-flag'
   target-milestone:
