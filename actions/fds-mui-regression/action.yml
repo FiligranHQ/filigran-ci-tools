@@ -1,0 +1,42 @@
+name: "FDS MUI Regression"
+description: >
+  Block a MUI component from re-entering code where the design system already
+  replaces it in this product. Only imports a file did not already have on the
+  merge base are read, so existing code is untouched.
+author: "FiligranHQ"
+inputs:
+  base-ref:
+    description: "Branch the pull request targets; the gate diffs against its merge base with HEAD"
+    required: false
+    default: ${{ github.base_ref }}
+runs:
+  using: "composite"
+  steps:
+    # The merge base needs the base branch and the history down to it, which a
+    # default shallow checkout has neither of.
+    - name: Fetch base branch
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+      run: |
+        set -euo pipefail
+        if [[ -z "$BASE_REF" ]]; then
+          echo "::error::No base ref: run this on a pull_request event or pass base-ref."
+          exit 1
+        fi
+        UNSHALLOW=()
+        if [[ "$(git rev-parse --is-shallow-repository)" == "true" ]]; then
+          UNSHALLOW=(--unshallow)
+        fi
+        git fetch --no-tags "${UNSHALLOW[@]}" origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+    - name: Check for MUI regressions
+      shell: bash
+      env:
+        BASE_REF: ${{ inputs.base-ref }}
+      run: node fds-migration/scripts/check-mui-regression.mjs --base "origin/${BASE_REF}"
+    # Runs whatever the verdict was: on a red gate this is the context the
+    # author needs.
+    - name: Policy in force
+      if: always()
+      shell: bash
+      run: node fds-migration/scripts/check-mui-regression.mjs --explain

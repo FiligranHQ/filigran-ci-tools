@@ -1,0 +1,16 @@
+name: "FDS Conformity"
+description: >
+  Run the product's design-system conformity check: the generated token bridge
+  has not been hand-edited, the theme files still import it, and no hardcoded
+  value has returned to a migrated zone.
+author: "FiligranHQ"
+runs:
+  using: "composite"
+  steps:
+    # The script is generated into each product by filigran-design-system and
+    # driven by that product's fds-migration/migration-state.json.
+    # bridge-freshness is computed only when @filigran/design-system is
+    # installed; otherwise it reports SKIPPED.
+    - name: Check FDS conformity
+      shell: bash
+      run: node fds-migration/scripts/check-fds-conformity.mjs

@@ -6,6 +6,8 @@ GitHub Actions for Filigran projects.
 - `pr-title-check`: Ensures PR titles follow Filigran conventions.
 - `check-signed-commit`: Requires all PR commits to be signed.
 - `auto-label`: Automatically labels PRs based on rules.
+- `fds-conformity`: Runs a product's design-system conformity check.
+- `fds-mui-regression`: Blocks MUI components the design system already replaces from re-entering a product.
 - `move-closed-issue-to-milestone`: When a closed issue has the configured labels, moves it to the target milestone.
 
 ## Usage Examples
