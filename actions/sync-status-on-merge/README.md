@@ -34,9 +34,9 @@ On `issues: closed` (manual close, as completed, by a user): same rules, except
 
 | Name | Required | Default | Description |
 |---|:---:|---|---|
-| `token` | ✅ | — | Token used for all `gh` calls (REST + GraphQL). |
-| `project-owner` | ❌ | `''` | Org owning the Project v2. |
-| `project-number` | ❌ | `''` | Project v2 number. |
+| `token` | ✅ | — | Token used for all GitHub calls (REST + GraphQL). |
+| `project-owner` | ✅ | — | Org owning the Project v2. |
+| `project-number` | ✅ | — | Project v2 number. |
 | `feature-flag-label` | ❌ | `feature-flag` | Label indicating a feature flag on the issue. |
 | `target-milestone` | ❌ | `0. Candidate` | Milestone to assign (never created). |
 | `fallback-status` | ❌ | `Final product validation` | Status for issues whose status matches no rule. |
@@ -45,6 +45,7 @@ On `issues: closed` (manual close, as completed, by a user): same rules, except
 ## Required permissions
 
 - **Issues**: read/write (labels, close, milestone, comments)
+- **Pull requests**: read (title, body, linked issues)
 - **Projects (org)**: read/write (Status field, GraphQL only)
 
 ## Limitations
@@ -56,5 +57,8 @@ On `issues: closed` (manual close, as completed, by a user): same rules, except
 
 ## Testing
 
-No unit tests — validated manually via a test PR against a dummy issue, checking
-Project status, `solved` label, closure, and milestone after merge.
+`logic.js` holds the rules, `api.js` the GitHub calls. Run the rule tests with:
+
+```bash
+node --test actions/sync-status-on-merge/logic.test.js
+```
