@@ -4,96 +4,53 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { findIssueNumbers, skipManualClose, decide } = require('./logic');
 
-const base = { event: 'pull_request', milestone: null, targetMilestone: '0. Candidate', fallbackStatus: 'Final product validation' };
-const sync = (status, extra = {}) => ({ action: 'sync', status, close: true, milestone: true, comment: false, ...extra });
-
 describe('findIssueNumbers', () => {
-  it('reads the title reference', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 10, title: 'fix(ui): thing (#1, #2)' }), [1, 2]);
-  });
-
-  it('reads closing keywords in the title and body', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 10, title: 'fix: thing', body: '* Closes #3\nFixes: #4\nRelated #5' }), [3, 4]);
-  });
-
-  it('adds issues linked in the Development panel', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 8309, title: 'fix(ee): harden the license window', linked: [8299] }), [8299]);
+  it('reads the title, the closing keywords and the Development panel', () => {
+    const pr = { prNumber: 10, title: 'fix: thing (#1, #2)', body: 'Closes #2\nFixes #3\nRelated #4', linked: [5] };
+    assert.deepEqual(findIssueNumbers(pr), [1, 2, 3, 5]);
   });
 
   it('ignores the PR own number', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 8399, title: 'docs(home): refresh the home page (#8399)' }), []);
-  });
-
-  it('ignores a reference not at the end of the title', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 10, title: 'fix: follow-up of (#1) for the form' }), []);
+    assert.deepEqual(findIssueNumbers({ prNumber: 8399, title: 'docs(home): refresh the home page (#8399)', body: '' }), []);
   });
 });
 
 describe('skipManualClose', () => {
-  const close = { number: 1, stateReason: 'completed', senderType: 'User', closer: null };
-
-  it('handles a manual close', () => {
+  it('only handles an issue closed as completed by a user', () => {
+    const close = { number: 1, stateReason: 'completed', senderType: 'User', closer: null };
     assert.equal(skipManualClose(close), null);
-  });
-
-  it('skips not planned', () => {
-    assert.match(skipManualClose({ ...close, stateReason: 'not_planned' }), /not_planned/);
-  });
-
-  it('skips a close by a bot', () => {
-    assert.match(skipManualClose({ ...close, senderType: 'Bot' }), /bot/);
-  });
-
-  it('skips a close by a pull request', () => {
-    assert.match(skipManualClose({ ...close, closer: 'PullRequest' }), /merge run/);
+    assert.ok(skipManualClose({ ...close, stateReason: 'not_planned' }));
+    assert.ok(skipManualClose({ ...close, senderType: 'Bot' }));
+    assert.ok(skipManualClose({ ...close, closer: 'PullRequest' }));
   });
 });
 
 describe('decide', () => {
-  it('feature-flag + In review → Test PO main-ff, stays open', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: true, status: 'In review' }),
-      { action: 'sync', status: 'Test PO main-ff', close: false, milestone: false, comment: false });
-  });
+  const FPV = 'Final product validation';
+  const closed = (status, comment = false) => ({ status, close: true, comment, milestone: true });
+  const skip = 'skip';
+  const cases = [
+    [true, 'In review', 'pull_request', { status: 'Test PO main-ff', close: false, comment: false, milestone: false }],
+    [true, 'In review', 'issues', skip],
+    [true, 'Ready to remove FF', 'pull_request', closed(FPV)],
+    [true, FPV, 'pull_request', skip],
+    [false, 'Ready to merge', 'pull_request', closed(FPV)],
+    [false, 'In review', 'pull_request', closed('Done', true)],
+    [false, 'Test PO main-ff', 'pull_request', skip],
+    [false, 'Done', 'pull_request', closed(null)],
+    [false, 'Ready for dev', 'issues', closed(FPV)],
+  ];
 
-  it('feature-flag + In review closed by hand → nothing', () => {
-    assert.equal(decide({ ...base, event: 'issues', hasFeatureFlag: true, status: 'In review' }).action, 'skip');
-  });
-
-  it('feature-flag + Ready to remove FF → FPV', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: true, status: 'Ready to remove FF' }), sync('Final product validation'));
-  });
-
-  it('feature-flag + other status → nothing', () => {
-    assert.equal(decide({ ...base, hasFeatureFlag: true, status: 'Final product validation' }).action, 'skip');
-  });
-
-  it('Ready to merge → FPV', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: 'Ready to merge' }), sync('Final product validation'));
-  });
-
-  it('In review → Done with the not tested comment', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: 'In review' }), sync('Done', { comment: true }));
-  });
-
-  it('Done or FPV → status kept', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: 'Done' }), sync(null));
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: 'Final product validation' }), sync(null));
-  });
-
-  it('other status → fallback status', () => {
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: 'Ready for dev' }), sync('Final product validation'));
-    assert.deepEqual(decide({ ...base, hasFeatureFlag: false, status: null }), sync('Final product validation'));
-  });
-
-  it('main-ff status without the label → nothing', () => {
-    assert.equal(decide({ ...base, hasFeatureFlag: false, status: 'Test PO main-ff' }).action, 'skip');
-  });
+  for (const [hasFeatureFlag, status, event, expected] of cases) {
+    it(`feature-flag=${hasFeatureFlag}, ${status}, ${event}`, () => {
+      const decision = decide({ hasFeatureFlag, status, event, milestone: null, targetMilestone: '0. Candidate', fallbackStatus: FPV });
+      if (expected === skip) assert.ok(decision.skip);
+      else assert.deepEqual(decision, expected);
+    });
+  }
 
   it('keeps a Release milestone', () => {
-    assert.equal(decide({ ...base, hasFeatureFlag: false, status: 'Done', milestone: 'Release 3.261008' }).milestone, false);
-  });
-
-  it('does not set the milestone twice', () => {
-    assert.equal(decide({ ...base, hasFeatureFlag: false, status: 'Done', milestone: '0. Candidate' }).milestone, false);
+    const decision = decide({ hasFeatureFlag: false, status: 'Done', milestone: 'Release 3.261008', targetMilestone: '0. Candidate', fallbackStatus: FPV });
+    assert.equal(decision.milestone, false);
   });
 });

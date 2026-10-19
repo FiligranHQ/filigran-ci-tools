@@ -2,19 +2,27 @@
 
 const TITLE_REF = /\((#\d+(?:,\s*#\d+)*)\)\s*$/;
 const KEYWORD_REF = /\b(?:close[sd]?|fix(?:es|ed)?|resolve[sd]?)\s*:?\s*#(\d+)/gi;
-const FINAL_STATUSES = ['Done', 'Final product validation'];
+const FPV = 'Final product validation';
 
-function findIssueNumbers({ prNumber, title = '', body = '', linked = [] }) {
-  const numbers = new Set(linked);
-  const titleRef = title.match(TITLE_REF);
-  if (titleRef) {
-    for (const m of titleRef[1].matchAll(/#(\d+)/g)) numbers.add(Number(m[1]));
-  }
-  for (const m of `${title}\n${body}`.matchAll(KEYWORD_REF)) numbers.add(Number(m[1]));
+// Issue numbers in the "(#n)" or "(#n, #m)" at the end of the title.
+function findIssueNumbersInTitle(title = '') {
+  const ref = title.match(TITLE_REF);
+  return ref ? [...ref[1].matchAll(/#(\d+)/g)].map((m) => Number(m[1])) : [];
+}
+
+// Issue numbers after a closing keyword (Closes, Fixes, Resolves…) in the body.
+function findIssueNumbersInBody(body = '') {
+  return [...body.matchAll(KEYWORD_REF)].map((m) => Number(m[1]));
+}
+
+// All issue numbers of a PR (title, body, Development panel), minus the PR itself.
+function findIssueNumbers({ prNumber, title, body, linked = [] }) {
+  const numbers = new Set([...findIssueNumbersInTitle(title), ...findIssueNumbersInBody(body), ...linked]);
   numbers.delete(prNumber);
   return [...numbers].sort((a, b) => a - b);
 }
 
+// Why a manual close is ignored, or null when it must be synced.
 function skipManualClose({ number, stateReason, senderType, closer }) {
   if (stateReason !== 'completed') return `Issue #${number} closed as "${stateReason}" — skipping.`;
   if (senderType === 'Bot') return `Issue #${number} closed by a bot — skipping.`;
@@ -22,25 +30,32 @@ function skipManualClose({ number, stateReason, senderType, closer }) {
   return null;
 }
 
-function decide({ hasFeatureFlag, status, event, milestone, targetMilestone, fallbackStatus }) {
-  const skip = { action: 'skip', reason: `No rule for status "${status}" with feature-flag=${hasFeatureFlag} — nothing to do.` };
-  const moveMilestone = !milestone?.startsWith('Release') && milestone !== targetMilestone;
-  const close = (newStatus, extra = {}) => ({
-    action: 'sync', status: newStatus, close: true, milestone: moveMilestone, comment: false, ...extra,
-  });
-
+// The rule matching the issue, or null when none does. A null status keeps the current one.
+function findRule({ hasFeatureFlag, status, event, fallbackStatus }) {
   if (hasFeatureFlag) {
-    if (status === 'In review' && event !== 'issues') {
-      return { action: 'sync', status: 'Test PO main-ff', close: false, milestone: false, comment: false };
-    }
-    if (status === 'Ready to remove FF') return close('Final product validation');
-    return skip;
+    if (status === 'In review' && event !== 'issues') return { status: 'Test PO main-ff', close: false };
+    if (status === 'Ready to remove FF') return { status: FPV, close: true };
+    return null;
   }
-  if (status === 'Ready to merge') return close('Final product validation');
-  if (status === 'In review') return close('Done', { comment: true });
-  if (status?.includes('main-ff')) return skip;
-  if (FINAL_STATUSES.includes(status)) return close(null);
-  return close(fallbackStatus);
+  if (status === 'Ready to merge') return { status: FPV, close: true };
+  if (status === 'In review') return { status: 'Done', close: true, comment: true };
+  if (status?.includes('main-ff')) return null;
+  if (status === 'Done' || status === FPV) return { status: null, close: true };
+  return { status: fallbackStatus, close: true };
+}
+
+// What to do with an issue, or { skip: reason } when there is nothing to do.
+function decide({ hasFeatureFlag, status, event, milestone, targetMilestone, fallbackStatus }) {
+  const rule = findRule({ hasFeatureFlag, status, event, fallbackStatus });
+  if (!rule) return { skip: `No rule for status "${status}" with feature-flag=${hasFeatureFlag} — nothing to do.` };
+
+  const keepMilestone = milestone?.startsWith('Release') || milestone === targetMilestone;
+  return {
+    status: rule.status,
+    close: rule.close,
+    comment: rule.comment ?? false,
+    milestone: rule.close && !keepMilestone,
+  };
 }
 
 module.exports = { findIssueNumbers, skipManualClose, decide };
