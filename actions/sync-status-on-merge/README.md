@@ -24,7 +24,8 @@ Any of these, all equivalent:
 
 For a `feature-flag` issue, use only `(#n)`: the other two make GitHub close the issue at merge.
 
-Only issues of the PR's repository are synced (`owner/repo#n` is ignored).
+An issue of another repository of the same owner (e.g. `filigran-private`) is synced too when linked in the Development panel
+or with `Closes owner/repo#n`; the title `(#n)` only reads the PR's repository.
 
 ## Usage
 
@@ -55,6 +56,7 @@ jobs:
         with:
           app-id: ${{ secrets.OPENAEV_PR_CHECKS_APP_ID }}
           private-key: ${{ secrets.OPENAEV_PR_CHECKS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
 
       - name: Sync status
         uses: FiligranHQ/filigran-ci-tools/actions/sync-status-on-merge@main
@@ -69,6 +71,7 @@ Optional inputs, with their defaults: `feature-flag-label` (`feature-flag`),
 `target-milestone` (`0. Candidate`), `fallback-status` (`Final product validation`).
 
 The token needs Issues read/write, Pull requests read and Projects (org) read/write.
+With `owner`, it also reaches the issues of the other repositories where the app is installed.
 
 ## Testing
 
