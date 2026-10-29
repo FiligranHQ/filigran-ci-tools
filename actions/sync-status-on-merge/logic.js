@@ -15,11 +15,12 @@ function findIssueNumbersInBody(body = '') {
   return [...body.matchAll(KEYWORD_REF)].map((m) => Number(m[1]));
 }
 
-// All issue numbers of a PR (title, body, Development panel), minus the PR itself.
-function findIssueNumbers({ prNumber, title, body, linked = [] }) {
-  const numbers = new Set([...findIssueNumbersInTitle(title), ...findIssueNumbersInBody(body), ...linked]);
+// Issues of a PR, minus the PR itself. Only a closing keyword or the Development panel may close one.
+function findIssues({ prNumber, title, body, linked = [] }) {
+  const closing = new Set([...findIssueNumbersInBody(body), ...linked]);
+  const numbers = new Set([...findIssueNumbersInTitle(title), ...closing]);
   numbers.delete(prNumber);
-  return [...numbers].sort((a, b) => a - b);
+  return [...numbers].sort((a, b) => a - b).map((number) => ({ number, canClose: closing.has(number) }));
 }
 
 // Why a manual close is ignored, or null when it must be synced.
@@ -45,9 +46,10 @@ function findRule({ hasFeatureFlag, status, event, fallbackStatus }) {
 }
 
 // What to do with an issue, or { skip: reason } when there is nothing to do.
-function decide({ hasFeatureFlag, status, event, milestone, targetMilestone, fallbackStatus }) {
+function decide({ hasFeatureFlag, status, event, milestone, targetMilestone, fallbackStatus, canClose = true }) {
   const rule = findRule({ hasFeatureFlag, status, event, fallbackStatus });
   if (!rule) return { skip: `No rule for status "${status}" with feature-flag=${hasFeatureFlag} — nothing to do.` };
+  if (rule.close && !canClose) return { skip: 'Only cited in the PR title — not closed.' };
 
   const keepMilestone = milestone?.startsWith('Release') || milestone === targetMilestone;
   return {
@@ -58,4 +60,4 @@ function decide({ hasFeatureFlag, status, event, milestone, targetMilestone, fal
   };
 }
 
-module.exports = { findIssueNumbers, skipManualClose, decide };
+module.exports = { findIssues, skipManualClose, decide };

@@ -1,6 +1,6 @@
 'use strict';
 
-const { findIssueNumbers, skipManualClose, decide } = require('./logic');
+const { findIssues, skipManualClose, decide } = require('./logic');
 const issues = require('../lib/issues');
 const milestones = require('../lib/milestones');
 const projects = require('../lib/projects');
@@ -30,7 +30,7 @@ async function run({ github, context, core }) {
   } else {
     const prNumber = Number(env.PR_NUMBER_INPUT || context.payload.pull_request.number);
     const pr = await pullRequests.getPullRequest(github, repo, prNumber);
-    targets = [...findIssueNumbers({ prNumber, ...pr }).map((number) => ({ repo, number })), ...pr.otherRepos];
+    targets = [...findIssues({ prNumber, ...pr }).map((i) => ({ repo, ...i })), ...pr.otherRepos];
   }
   const label = (t) => (t.repo.repo === repo.repo ? `#${t.number}` : `${t.repo.repo}#${t.number}`);
   core.info(`Detected issues: ${targets.map(label).join(' ') || '<none>'}`);
@@ -63,6 +63,7 @@ async function run({ github, context, core }) {
         milestone: issue.milestone,
         targetMilestone: env.TARGET_MILESTONE,
         fallbackStatus: env.FALLBACK_STATUS,
+        canClose: target.canClose,
       });
       if (decision.skip) {
         core.info(decision.skip);

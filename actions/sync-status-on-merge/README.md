@@ -16,13 +16,12 @@ An issue already in `Done` or `FPV` keeps its status. Any other case (e.g. an is
 
 ## Linking a PR to its issue
 
-Any of these, all equivalent:
+- `Closes #n` in the PR body (`Fixes` and `Resolves` work too), or the issue linked in the PR's Development panel:
+  all the rules above apply, the issue can be closed;
+- `(#n)` at the end of the PR title only: the issue is never closed. Only `feature-flag + In review → Test PO main-ff`
+  applies, so a PR that does not finish its issue (e.g. part of an epic) leaves it as it is.
 
-- `(#n)` at the end of the PR title;
-- `Closes #n` in the PR body (`Fixes` and `Resolves` work too);
-- the issue linked in the PR's Development panel.
-
-For a `feature-flag` issue, use only `(#n)`: the other two make GitHub close the issue at merge.
+For a `feature-flag` issue, use only `(#n)` until the PR that removes the flag, which uses `Closes #n`.
 
 An issue of another repository of the same owner (e.g. `filigran-private`) is synced too when linked in the Development panel
 or with `Closes owner/repo#n`; the title `(#n)` only reads the PR's repository.
