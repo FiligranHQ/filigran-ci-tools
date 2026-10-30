@@ -2,16 +2,21 @@
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { findIssueNumbers, skipManualClose, decide } = require('./logic');
+const { findIssues, skipManualClose, decide } = require('./logic');
 
-describe('findIssueNumbers', () => {
+describe('findIssues', () => {
   it('reads the title, the closing keywords and the Development panel', () => {
     const pr = { prNumber: 10, title: 'fix: thing (#1, #2)', body: 'Closes #2\nFixes #3\nRelated #4', linked: [5] };
-    assert.deepEqual(findIssueNumbers(pr), [1, 2, 3, 5]);
+    assert.deepEqual(findIssues(pr), [
+      { number: 1, canClose: false },
+      { number: 2, canClose: true },
+      { number: 3, canClose: true },
+      { number: 5, canClose: true },
+    ]);
   });
 
   it('ignores the PR own number', () => {
-    assert.deepEqual(findIssueNumbers({ prNumber: 8399, title: 'docs(home): refresh the home page (#8399)', body: '' }), []);
+    assert.deepEqual(findIssues({ prNumber: 8399, title: 'docs(home): refresh the home page (#8399)', body: '' }), []);
   });
 });
 
@@ -48,6 +53,13 @@ describe('decide', () => {
       else assert.deepEqual(decision, expected);
     });
   }
+
+  it('never closes an issue only cited in the title', () => {
+    const base = { hasFeatureFlag: false, event: 'pull_request', milestone: null, targetMilestone: '0. Candidate', fallbackStatus: FPV, canClose: false };
+    assert.ok(decide({ ...base, status: 'In progress' }).skip);
+    assert.ok(decide({ ...base, status: 'Ready to merge' }).skip);
+    assert.equal(decide({ ...base, hasFeatureFlag: true, status: 'In review' }).status, 'Test PO main-ff');
+  });
 
   it('keeps a Release milestone', () => {
     const decision = decide({ hasFeatureFlag: false, status: 'Done', milestone: 'Release 3.261008', targetMilestone: '0. Candidate', fallbackStatus: FPV });
